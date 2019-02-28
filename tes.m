@@ -95,11 +95,12 @@ handles.g2=get(handles.slider4,'value');
 handles.g3=get(handles.slider5,'value');
 handles.g4=get(handles.slider7,'value');
 handles.g5=get(handles.slider8,'value');
- handles.g6=get(handles.slider9,'value');
- handles.g7=get(handles.slider10,'value');
- handles.g8=get(handles.slider11,'value');
- handles.g9=get(handles.slider6,'value');
+handles.g6=get(handles.slider9,'value');
+handles.g7=get(handles.slider10,'value');
+handles.g8=get(handles.slider11,'value');
+handles.g9=get(handles.slider6,'value');
 handles.g10=get(handles.slider12,'value');
+
 set(handles.text16, 'String',handles.g1);
 set(handles.text19, 'String',handles.g2);
 set(handles.text20, 'String',handles.g3);
@@ -111,7 +112,19 @@ set(handles.text25, 'String',handles.g8);
 set(handles.text26, 'String',handles.g9);
 set(handles.text27, 'String',handles.g10);
 
+handles.g1=10^(handles.g1/10);
+handles.g2=10^(handles.g2/10);
+handles.g3=10^(handles.g3/10);
+handles.g4=10^(handles.g4/10);
+handles.g5=10^(handles.g5/10);
+handles.g6=10^(handles.g6/10);
+handles.g7=10^(handles.g7/10);
+handles.g8=10^(handles.g8/10);
+handles.g9=10^(handles.g9/10);
+handles.g10=10^(handles.g10/10);
+
 cut_off=200; %cut off low pass dalama Hz
+%order 16;
 orde=16;
 a=fir1(orde,cut_off/(handles.Fs/2),'low');
 y1=handles.g1*filter(a,1,handles.y);
@@ -171,6 +184,7 @@ y10=handles.g10*filter(c,1,handles.y);
 %handles.yT=y1+y2+y3+y4+y5+y6+y7;
  handles.yT=y1+y2+y3+y4+y5+y6+y7+y8+y9+y10;
 player = audioplayer(handles.Volume*handles.yT, handles.Fs);
+%player = audioplayer(handles.yT, handles.Fs);
  subplot(2,1,1);
  plot(handles.y);
  subplot(2,1,2);
