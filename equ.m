@@ -22,7 +22,7 @@ function varargout = equ(varargin)
 
 % Edit the above text to modify the response to help equ
 
-% Last Modified by GUIDE v2.5 26-Feb-2019 19:09:41
+% Last Modified by GUIDE v2.5 28-Feb-2019 11:19:39
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -78,13 +78,10 @@ function browse_Callback(hObject, eventdata, handles)
 % hObject    handle to browse (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-[fileName,pathName] = uigetfile({'*.wav'}, 'File Selector');
+[fileName,pathName] = uigetfile({'*.wav; *.mp3'}, 'Open');
 handles.fullPathName = strcat(pathName, fileName);
 set(handles.address, 'String', handles.fullPathName);
-guidata(hObject,handles)
-
-function play_equlizer(hObject, eventdata, handles)
-
+guidata(hObject, handles);
 
 % --- Executes on button press in play.
 function play_Callback(hObject, eventdata, handles)
@@ -92,9 +89,51 @@ function play_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 global player;
-play_equalizer(hObject, handles);
+[data, fs] = audioread(handles.fullPathName);
+data_fft =  fft(data);
+freq_step = (fs/2)/(length(data)/2);
+
+freq = [32 64 125 250 500 1000 2000 4000 8000 16000];
+g1 = 10^(get(handles.slider_32, 'Value')/10);
+g2 = 10^(get(handles.slider_64, 'Value')/10);
+g3 = 10^(get(handles.slider_125, 'Value')/10);
+g4 = 10^(get(handles.slider_250, 'Value')/10);
+g5 = 10^(get(handles.slider_500, 'Value')/10);
+g6 = 10^(get(handles.slider_1k, 'Value')/10);
+g7 = 10^(get(handles.slider_2k, 'Value')/10);
+g8 = 10^(get(handles.slider_4k, 'Value')/10);
+g9 = 10^(get(handles.slider_8k, 'Value')/10);
+g10 = 10^(get(handles.slider_16k, 'Value')/10);
+amp = [g1 g2 g3 g4 g5 g6 g7 g8 g9 g10];
+amp = amp*get(handles.volume, 'Value');
+
+indeces = [2 ceil(freq/freq_step) length(data)/2];
+conj_indeces = [length(data)+2-indeces];
+% frequencies = (0:freq_step:fs/2);
+
+for i=2:length(indeces)-1
+    data_fft(indeces(i-1):indeces(i),:) = data_fft(indeces(i-1):indeces(i),:)*amp(i-1);
+    data_fft(conj_indeces(i):conj_indeces(i-1),:) = data_fft(conj_indeces(i):conj_indeces(i-1),:)*amp(i-1);
+%     band1 = indeces(i)-indeces(i-1);
+%     amplitudes1 = (1:(amp(i-1)-1)/band:amp(i-1));
+%     disp(size(amplitudes1));
+%     band2 = indeces(i+1)-indeces(i);
+%     display(data);
+%     disp(size(data_fft(indeces(i-1):indeces(i),:)))
+%     amplitudes2 = (amp(i-1):(amp(i-1)-1)/band:1);
+%     data_fft(indeces(i-1):indeces(i),:) = data_fft(indeces(i-1):indeces(i),:).*transpose(amplitudes1);
+%     data_fft(indeces(i-1)+1:indeces(i),:) = data_fft(indeces(i-1)+1:indeces(i),:).*transpose(amplitudes2(2:end));
+end
+
+data_ifft = ifft(data_fft);
+subplot(2,1,1);
+plot(data);
+subplot(2,1,2);
+plot(data_ifft);
+
+player = audioplayer(data_ifft, fs);
 play(player);
-quidata(hObject, handles)
+guidata(hObject, handles);
 
 % --- Executes on button press in pause.
 function pause_Callback(hObject, eventdata, handles)
@@ -102,9 +141,8 @@ function pause_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 global player;
-play_equalizer(hObject, handles);
 pause(player);
-quidata(hObject, handles)
+guidata(hObject, handles);
 
 % --- Executes on button press in resume.
 function resume_Callback(hObject, eventdata, handles)
@@ -112,9 +150,8 @@ function resume_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 global player;
-play_equalizer(hObject, handles);
 resume(player);
-quidata(hObject, handles)
+guidata(hObject, handles);
 
 % --- Executes on button press in stop.
 function stop_Callback(hObject, eventdata, handles)
@@ -122,9 +159,8 @@ function stop_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 global player;
-play_equalizer(hObject, handles);
 stop(player);
-quidata(hObject, handles)
+guidata(hObject, handles);
 
 % --- Executes on slider movement.
 function slider12_Callback(hObject, eventdata, handles)
@@ -191,18 +227,18 @@ function techno_Callback(hObject, eventdata, handles)
 
 
 % --- Executes on slider movement.
-function slider1_Callback(hObject, eventdata, handles)
-% hObject    handle to slider1 (see GCBO)
+function slider_32_Callback(hObject, eventdata, handles)
+% hObject    handle to slider_32 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
 % Hints: get(hObject,'Value') returns position of slider
 %        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
-
+set(handles.text_32, 'String', get(hObject,'Value'));
 
 % --- Executes during object creation, after setting all properties.
-function slider1_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to slider1 (see GCBO)
+function slider_32_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to slider_32 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
@@ -213,18 +249,18 @@ end
 
 
 % --- Executes on slider movement.
-function slider2_Callback(hObject, eventdata, handles)
-% hObject    handle to slider2 (see GCBO)
+function slider_64_Callback(hObject, eventdata, handles)
+% hObject    handle to slider_64 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
 % Hints: get(hObject,'Value') returns position of slider
 %        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
-
+set(handles.text_64, 'String', get(hObject,'Value'));
 
 % --- Executes during object creation, after setting all properties.
-function slider2_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to slider2 (see GCBO)
+function slider_64_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to slider_64 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
@@ -235,18 +271,18 @@ end
 
 
 % --- Executes on slider movement.
-function slider3_Callback(hObject, eventdata, handles)
-% hObject    handle to slider3 (see GCBO)
+function slider_125_Callback(hObject, eventdata, handles)
+% hObject    handle to slider_125 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
 % Hints: get(hObject,'Value') returns position of slider
 %        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
-
+set(handles.text_125, 'String', get(hObject,'Value'));
 
 % --- Executes during object creation, after setting all properties.
-function slider3_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to slider3 (see GCBO)
+function slider_125_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to slider_125 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
@@ -257,18 +293,18 @@ end
 
 
 % --- Executes on slider movement.
-function slider4_Callback(hObject, eventdata, handles)
-% hObject    handle to slider4 (see GCBO)
+function slider_250_Callback(hObject, eventdata, handles)
+% hObject    handle to slider_250 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
 % Hints: get(hObject,'Value') returns position of slider
 %        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
-
+set(handles.text_250, 'String', get(hObject,'Value'));
 
 % --- Executes during object creation, after setting all properties.
-function slider4_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to slider4 (see GCBO)
+function slider_250_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to slider_250 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
@@ -279,18 +315,18 @@ end
 
 
 % --- Executes on slider movement.
-function slider5_Callback(hObject, eventdata, handles)
-% hObject    handle to slider5 (see GCBO)
+function slider_500_Callback(hObject, eventdata, handles)
+% hObject    handle to slider_500 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
 % Hints: get(hObject,'Value') returns position of slider
 %        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
-
+set(handles.text_500, 'String', get(hObject,'Value'));
 
 % --- Executes during object creation, after setting all properties.
-function slider5_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to slider5 (see GCBO)
+function slider_500_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to slider_500 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
@@ -301,18 +337,18 @@ end
 
 
 % --- Executes on slider movement.
-function slider6_Callback(hObject, eventdata, handles)
-% hObject    handle to slider6 (see GCBO)
+function slider_1k_Callback(hObject, eventdata, handles)
+% hObject    handle to slider_1k (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
 % Hints: get(hObject,'Value') returns position of slider
 %        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
-
+set(handles.text_1k, 'String', get(hObject,'Value'));
 
 % --- Executes during object creation, after setting all properties.
-function slider6_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to slider6 (see GCBO)
+function slider_1k_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to slider_1k (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
@@ -323,18 +359,19 @@ end
 
 
 % --- Executes on slider movement.
-function slider7_Callback(hObject, eventdata, handles)
-% hObject    handle to slider7 (see GCBO)
+function slider_2k_Callback(hObject, eventdata, handles)
+% hObject    handle to slider_2k (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
 % Hints: get(hObject,'Value') returns position of slider
 %        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
+set(handles.text_2k, 'String', get(hObject,'Value'));
 
 
 % --- Executes during object creation, after setting all properties.
-function slider7_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to slider7 (see GCBO)
+function slider_2k_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to slider_2k (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
@@ -345,18 +382,19 @@ end
 
 
 % --- Executes on slider movement.
-function slider8_Callback(hObject, eventdata, handles)
-% hObject    handle to slider8 (see GCBO)
+function slider_4k_Callback(hObject, eventdata, handles)
+% hObject    handle to slider_4k (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
 % Hints: get(hObject,'Value') returns position of slider
 %        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
+set(handles.text_4k, 'String', get(hObject,'Value'));
 
 
 % --- Executes during object creation, after setting all properties.
-function slider8_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to slider8 (see GCBO)
+function slider_4k_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to slider_4k (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
@@ -367,18 +405,19 @@ end
 
 
 % --- Executes on slider movement.
-function slider9_Callback(hObject, eventdata, handles)
-% hObject    handle to slider9 (see GCBO)
+function slider_8k_Callback(hObject, eventdata, handles)
+% hObject    handle to slider_8k (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
 % Hints: get(hObject,'Value') returns position of slider
 %        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
+set(handles.text_8k, 'String', get(hObject,'Value'));
 
 
 % --- Executes during object creation, after setting all properties.
-function slider9_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to slider9 (see GCBO)
+function slider_8k_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to slider_8k (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
@@ -389,18 +428,19 @@ end
 
 
 % --- Executes on slider movement.
-function slider10_Callback(hObject, eventdata, handles)
-% hObject    handle to slider10 (see GCBO)
+function slider_16k_Callback(hObject, eventdata, handles)
+% hObject    handle to slider_16k (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
 % Hints: get(hObject,'Value') returns position of slider
 %        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
+set(handles.text_16k, 'String', get(hObject,'Value'));
 
 
 % --- Executes during object creation, after setting all properties.
-function slider10_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to slider10 (see GCBO)
+function slider_16k_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to slider_16k (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
@@ -411,8 +451,8 @@ end
 
 
 % --- Executes on slider movement.
-function slider13_Callback(hObject, eventdata, handles)
-% hObject    handle to slider13 (see GCBO)
+function volume_Callback(hObject, eventdata, handles)
+% hObject    handle to volume (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
@@ -421,8 +461,8 @@ function slider13_Callback(hObject, eventdata, handles)
 
 
 % --- Executes during object creation, after setting all properties.
-function slider13_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to slider13 (see GCBO)
+function volume_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to volume (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
@@ -430,3 +470,37 @@ function slider13_CreateFcn(hObject, eventdata, handles)
 if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor',[.9 .9 .9]);
 end
+
+
+% --- Executes on button press in pushbutton13.
+function pushbutton13_Callback(hObject, eventdata, handles)
+% hObject    handle to pushbutton13 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+% --- Executes on button press in reset.
+function reset_Callback(hObject, eventdata, handles)
+% hObject    handle to reset (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+set(handles.slider_32, 'Value', 0);
+set(handles.slider_64, 'Value', 0);
+set(handles.slider_125, 'Value', 0);
+set(handles.slider_250, 'Value', 0);
+set(handles.slider_500, 'Value', 0);
+set(handles.slider_1k, 'Value', 0);
+set(handles.slider_2k, 'Value', 0);
+set(handles.slider_4k, 'Value', 0);
+set(handles.slider_8k, 'Value', 0);
+set(handles.slider_16k, 'Value', 0);
+set(handles.text_32, 'String', '0');
+set(handles.text_64, 'String', '0');
+set(handles.text_125, 'String', '0');
+set(handles.text_250, 'String', '0');
+set(handles.text_500, 'String', '0');
+set(handles.text_1k, 'String', '0');
+set(handles.text_2k, 'String', '0');
+set(handles.text_4k, 'String', '0');
+set(handles.text_8k, 'String', '0');
+set(handles.text_16k, 'String', '0');
